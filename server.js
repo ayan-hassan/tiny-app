@@ -60,6 +60,13 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
+app.post("/urls/:id", (req, res) => {
+  let longURL = req.body.newURL;
+  let tinyURL = req.params.id;
+  urlDatabase[tinyURL] = longURL;
+  res.redirect("/urls");
+});
+
 
 app.listen(PORT, () => {
   console.log(`TinyApp listening on port ${PORT}!`);
