@@ -38,6 +38,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+//displays all saved urls
 app.post("/urls", (req, res) => {
   let longURL = req.body.longURL;
   let tinyURL = generateRandomString();
@@ -45,21 +46,25 @@ app.post("/urls", (req, res) => {
   res.redirect(`urls/${tinyURL}`);
 });
 
+//single url page
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
 
+//redirect to longurl
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
 
+//delete tinyurl
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 
+//edit longurl
 app.post("/urls/:id", (req, res) => {
   let longURL = req.body.newURL;
   let tinyURL = req.params.id;
@@ -67,6 +72,12 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
+//login with username
+app.post("/login", (req, res) => {
+  let username = req.body.username;
+  res.cookie('username', username);
+  res.redirect("/urls");
+});
 
 app.listen(PORT, () => {
   console.log(`TinyApp listening on port ${PORT}!`);
