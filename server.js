@@ -8,7 +8,7 @@ app.use(express.urlencoded({ extended: true}));
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "9sm5xK": "http://www.google.com" 
 };
 
 const generateRandomString = () => {
@@ -39,8 +39,12 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("ok");
+  // console.log(req.body);
+  // res.send("ok");
+  let longURL = req.body.longURL;
+  let tinyURL = generateRandomString();
+  urlDatabase[tinyURL] = longURL;
+  res.redirect(`urls/${tinyURL}`);
 });
 
 app.get("/urls/:id", (req, res) => {
