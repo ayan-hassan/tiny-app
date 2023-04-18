@@ -11,7 +11,7 @@ app.use(cookieParser());
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com" 
+  "9sm5xK": "http://www.google.com"
 };
 
 const generateRandomString = () => {
@@ -91,6 +91,15 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase,
   };
   res.render("urls_index", templateVars);
+});
+
+//register
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"],
+    urls: urlDatabase,
+  };
+  res.render("urls_register", templateVars);
 });
 
 //login with username
