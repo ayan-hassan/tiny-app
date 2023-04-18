@@ -199,12 +199,12 @@ app.get("/urls", (req, res) => {
 app.get("/register", (req, res) => {
   if (cookieIsCurrentUser(req.cookies["user_id"], users)) {
     res.redirect("/urls");
+  } else {
+    let templateVars = {
+      user: users[req.cookies["user_id"]],
+    };
+    res.render("urls_register", templateVars);
   }
-  const templateVars = {
-    user: users[req.cookies["user_id"]],
-    urls: urlDatabase,
-  };
-  res.render("urls_register", templateVars);
 });
 
 app.post("/register", (req, res) => {
