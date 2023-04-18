@@ -92,15 +92,11 @@ app.get("/hello", (req, res) => {
 
 //displays all saved urls
 app.get("/urls", (req, res) => {
-  if (!cookieIsCurrentUser(req.cookies["user_id"], users)) {
-    res.send("Please login in order to view your tinyURLs");
-  } else {
-    const templateVars = {
-      urls: urlDatabase,
-      user: users[req.cookies["user_id"]]
-    };
-    res.render("urls_index", templateVars);
-  }
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[req.cookies["user_id"]]
+  };
+  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
