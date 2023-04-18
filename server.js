@@ -58,12 +58,25 @@ const getUserID = (email, userDatabase) => {
 
 const cookieIsCurrentUser = (cookie, userDatabase) => {
   for (const user in userDatabase) {
-    if (userDatabase[user].id === cookie) {
+    if (user === cookie) {
       return true;
     }
   }
   return false;
 };
+
+//checks if URLs' useriD matches the currently logged in user
+const urlsforUser = (id) => {
+  let result = {};
+  for (const user in urlDatabase) {
+    if (urlDatabase[user].userID === id) {
+      result[user] = urlDatabase[user];
+    }
+  }
+  return result;
+};
+
+//------------------------ROUTES-----------------------------//
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -77,15 +90,17 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-//------------------------ROUTES-----------------------------//
-
 //displays all saved urls
 app.get("/urls", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    user: users[req.cookies["user_id"]]
-  };
-  res.render("urls_index", templateVars);
+  if (!cookieIsCurrentUser(req.cookies["user_id"], users)) {
+    res.send("Please login in order to view your tinyURLs");
+  } else {
+    const templateVars = {
+      urls: urlDatabase,
+      user: users[req.cookies["user_id"]]
+    };
+    res.render("urls_index", templateVars);
+  }
 });
 
 app.get("/urls/new", (req, res) => {
@@ -114,11 +129,25 @@ app.post("/urls", (req, res) => {
 
 //single url page
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL,
-    user: users[req.cookies["user_id"]]
-  };
-  res.render("urls_show", templateVars);
+  let tinyURL = req.params.id;
+  if (!cookieIsCurrentUser(req.cookies["user_id"], users)) {
+    res.send("If you own this tiny URL, please login in order to view/ edit it.");
+  }
+  if (req.cookies["user_id"] !== urlDatabase[tinyURL].userID) {
+    res.send("This link is not associatd with your account.");
+  }
+  if (urlDatabase[req.params.id]) {
+    let templateVars = {
+      tinyURL: req.params.id,
+      longURL: urlDatabase[req.params.id].longURL,
+      urlUserID: urlDatabase[req.cookies["user_id"]].userID,
+      user: users[req.session.user_id],
+    };
+    res.render("urls_show", templateVars);
+  } else {
+    res.status(404).send("The tiny URL you entered does not correspond with a registered long URL.");
+  }
+
 });
 
 //redirect to longurl
