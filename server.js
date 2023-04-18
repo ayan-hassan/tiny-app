@@ -10,8 +10,14 @@ app.use(express.urlencoded({ extended: true}));
 app.use(cookieParser());
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
@@ -26,6 +32,8 @@ const users = {
     password: "dishwasher-funk",
   }
 };
+
+//---------------- HELPER FUNCTIONS -------------------//
 
 const generateRandomString = () => {
   return Math.random().toString(36).substring(3, 9);
@@ -56,7 +64,6 @@ const cookieIsCurrentUser = (cookie, userDatabase) => {
   }
   return false;
 };
-
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -93,19 +100,22 @@ app.get("/urls/new", (req, res) => {
 
 //creates new tinyurl
 app.post("/urls", (req, res) => {
-  if (!cookieIsCurrentUser(req.cookies["user_id"], users)) {
-    res.send("Please login in order to create tinyURLs");
+  if (cookieIsCurrentUser(req.cookies["user_id"], users)) {
+    const tinyURL = generateRandomString();
+    urlDatabase[tinyURL] = {
+      longURL: req.body.longURL,
+      userID: req.cookies["user_id"],
+    };
+    res.redirect(`/urls/${tinyURL}`);
+  } else {
+    res.status(401).send("Please log in with a valid account in order to create tiny URLs.");
   }
-  let longURL = req.body.longURL;
-  let tinyURL = generateRandomString();
-  urlDatabase[tinyURL] = longURL;
-  res.redirect(`urls/${tinyURL}`);
 });
 
 //single url page
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     user: users[req.cookies["user_id"]]
   };
   res.render("urls_show", templateVars);
@@ -114,14 +124,14 @@ app.get("/urls/:id", (req, res) => {
 //redirect to longurl
 app.get("/u/:id", (req, res) => {
   if (urlDatabase[req.params.id]) {
-    const longURL = urlDatabase[req.params.id];
+    const longURL = urlDatabase[req.params.id].longURL;
     if (longURL === undefined) {
       res.status(302);
     } else {
       res.redirect(longURL);
     }
   } else {
-    res.status(404).send("This tiny URL does not exist.");
+    res.status(404).send("This tinyURL does not exist.");
   }
 });
 
