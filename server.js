@@ -48,6 +48,15 @@ const getUserID = (email, userDatabase) => {
   }
 };
 
+const cookieIsCurrentUser = (cookie, userDatabase) => {
+  for (const user in userDatabase) {
+    if (userDatabase[user].id === cookie) {
+      return true;
+    }
+  }
+  return false;
+};
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -127,6 +136,9 @@ app.get("/urls", (req, res) => {
 
 //register new user
 app.get("/register", (req, res) => {
+  if (cookieIsCurrentUser(req.cookies["user_id"], users)) {
+    res.redirect("/urls");
+  }
   const templateVars = {
     user: users[req.cookies["user_id"]],
     urls: urlDatabase,
@@ -154,6 +166,9 @@ app.post("/register", (req, res) => {
 
 //login
 app.get("/login", (req, res) => {
+  if (cookieIsCurrentUser(req.cookies["user_id"], users)) {
+    res.redirect("/urls");
+  }
   const templateVars = {
     user: users[req.cookies["user_id"]],
     urls: urlDatabase,
