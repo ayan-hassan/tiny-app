@@ -16,6 +16,16 @@
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
+        <% if (!user) { %>
+          <div class="alert alert-warning" role="alert">
+              This link is not associated with your account.
+              Please <a href="/login" class="alert-link">login</a> or <a href="/register" class="alert-link">create an account</a> to view your personal inventory of tiny URLs.
+          </div>
+        <% } else if (user.id !== urlUserID) { %>
+          <div class="alert alert-warning" role="alert">
+              This link is not associated with your account.
+          </div>
+        <% } %>
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>

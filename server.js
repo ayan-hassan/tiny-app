@@ -162,8 +162,15 @@ app.get("/u/:id", (req, res) => {
 
 //delete tinyurl
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect("/urls");
+  const userID = req.cookies["user_id"];
+  const userUrls = urlsforUser(userID, urlDatabase);
+  if (Object.keys(userUrls).includes(req.params.id)) {
+    const tinyURL = req.params.id;
+    delete urlDatabase[tinyURL];
+    res.redirect('/urls');
+  } else {
+    res.status(401).send("You are not authorized to delete this tiny URL.");
+  }
 });
 
 //edit longurl
