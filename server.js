@@ -31,13 +31,21 @@ const generateRandomString = () => {
   return Math.random().toString(36).substring(3, 9);
 };
 
-const getUserByEmail = (email, userDatabase) => {
+const emailHasUser = (email, userDatabase) => {
   for (const user in userDatabase) {
-    if (email === users[user].email) {
+    if (email === userDatabase[user].email) {
       return true;
     }
   }
   return false;
+};
+
+const getUserID = (email, userDatabase) => {
+  for (const user in userDatabase) {
+    if (userDatabase[user].email === email) {
+      return userDatabase[user].id;
+    }
+  }
 };
 
 
@@ -132,7 +140,7 @@ app.post("/register", (req, res) => {
   if (email === "" || password === "") {
     return res.status(400).send("Please register with a valid email and/or password.");
   }
-  if (getUserByEmail(email, users)) {
+  if (emailHasUser(email, users)) {
     return res.status(400).send("This email address is already registered with an account.");
   }
   users[randomID] = {
@@ -144,7 +152,7 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-//login with username
+//login
 app.get("/login", (req, res) => {
   const templateVars = {
     user: users[req.cookies["user_id"]],
@@ -153,16 +161,27 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars);
 });
 
-// app.post("/login", (req, res) => {
-//   const username = req.body.username;
-//   res.cookie('username', username);
-//   res.redirect("/urls");
-// });
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!emailHasUser(email, users)) {
+    res.status(403).send("This email address is not associated with an account");
+  } else {
+    const userID = getUserID(email, users);
+    if (password !== users[userID].password) {
+      res.status(403).send("The password you have entered doesn't match one associated with the provided email address");
+    } else {
+      res.cookie("user_id", userID);
+      res.redirect("/urls");
+    }
+  }
+});
 
 //logout
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.listen(PORT, () => {
