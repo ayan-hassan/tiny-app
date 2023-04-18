@@ -31,6 +31,16 @@ const generateRandomString = () => {
   return Math.random().toString(36).substring(3, 9);
 };
 
+const getUserByEmail = (email, userDatabase) => {
+  for (const user in userDatabase) {
+    if (email === users[user].email) {
+      return true;
+    }
+  }
+  return false;
+};
+
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -119,6 +129,12 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const randomID = generateRandomString();
   const { email, password } = req.body;
+  if (email === "" || password === "") {
+    return res.status(400).send("Please register with a valid email and/or password.");
+  }
+  if (getUserByEmail(email, users)) {
+    return res.status(400).send("This email address is already registered with an account.");
+  }
   users[randomID] = {
     id: randomID,
     email: email,
