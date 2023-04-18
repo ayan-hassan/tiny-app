@@ -175,10 +175,15 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //edit longurl
 app.post("/urls/:id", (req, res) => {
-  let longURL = req.body.newURL;
   let tinyURL = req.params.id;
-  urlDatabase[tinyURL] = longURL;
-  res.redirect("/urls");
+  let newLongURL = req.body.newURL;
+  console.log(req.body);
+  if (req.cookies["user_id"] === urlDatabase[tinyURL].userID) {
+    urlDatabase[tinyURL].longURL = newLongURL;
+    res.redirect('/urls');
+  } else {
+    res.status(401).send("You are not authorized to edit this tiny URL.");
+  }
 });
 
 
