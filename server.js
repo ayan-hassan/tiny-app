@@ -82,6 +82,9 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  if (!cookieIsCurrentUser(req.cookies["user_id"], users)) {
+    res.redirect("/login");
+  }
   const templateVars = {
     user: users[req.cookies["user_id"]]
   };
@@ -90,6 +93,9 @@ app.get("/urls/new", (req, res) => {
 
 //creates new tinyurl
 app.post("/urls", (req, res) => {
+  if (!cookieIsCurrentUser(req.cookies["user_id"], users)) {
+    res.send("Please login in order to create tinyURLs");
+  }
   let longURL = req.body.longURL;
   let tinyURL = generateRandomString();
   urlDatabase[tinyURL] = longURL;
@@ -107,8 +113,16 @@ app.get("/urls/:id", (req, res) => {
 
 //redirect to longurl
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
+  if (urlDatabase[req.params.id]) {
+    const longURL = urlDatabase[req.params.id];
+    if (longURL === undefined) {
+      res.status(302);
+    } else {
+      res.redirect(longURL);
+    }
+  } else {
+    res.status(404).send("This tiny URL does not exist.");
+  }
 });
 
 //delete tinyurl
