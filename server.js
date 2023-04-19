@@ -1,5 +1,6 @@
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 
 const app = express();
 const PORT = 8080; // default port 8080
@@ -77,6 +78,7 @@ app.get("/urls", (req, res) => {
     user: users[req.cookies["user_id"]]
   };
   res.render("urls_index", templateVars);
+  console.log(urlDatabase);
 });
 
 app.get("/urls/new", (req, res) => {
