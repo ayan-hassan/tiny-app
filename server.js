@@ -201,7 +201,7 @@ app.post("/register", (req, res) => {
   users[randomID] = {
     id: randomID,
     email: email,
-    password: password
+    password: bcrypt.hashSync(password, 10)
   };
   res.cookie("user_id", randomID);
   res.redirect("/urls");
@@ -227,7 +227,7 @@ app.post("/login", (req, res) => {
     res.status(403).send("This email address is not associated with an account");
   } else {
     const userID = getUserID(email, users);
-    if (password !== users[userID].password) {
+    if (!bcrypt.compareSync(password, users[userID].password)) {
       res.status(403).send("The password you have entered doesn't match one associated with the provided email address");
     } else {
       res.cookie("user_id", userID);
