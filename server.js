@@ -78,30 +78,30 @@ app.get("/hello", (req, res) => {
 //displays all saved urls
 app.get("/urls", (req, res) => {
   const templateVars = {
-    urls: urlDatabase,
-    user: users[req.cookies["user_id"]]
+    urls: urlsforUser(req.session.user_id, urlDatabase),
+    user: users[req.session.user_id]
   };
   res.render("urls_index", templateVars);
   console.log(urlDatabase);
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!cookieIsCurrentUser(req.cookies["user_id"], users)) {
+  if (!cookieIsCurrentUser(req.session.user_id, users)) {
     res.redirect("/login");
   }
   const templateVars = {
-    user: users[req.cookies["user_id"]]
+    user: users[req.session.user_id]
   };
   res.render("urls_new", templateVars);
 });
 
 //creates new tinyurl
 app.post("/urls", (req, res) => {
-  if (cookieIsCurrentUser(req.cookies["user_id"], users)) {
+  if (cookieIsCurrentUser(req.session.user_id, users)) {
     const tinyURL = generateRandomString();
     urlDatabase[tinyURL] = {
       longURL: req.body.longURL,
-      userID: req.cookies["user_id"],
+      userID: req.session.user_id,
     };
     res.redirect(`/urls/${tinyURL}`);
   } else {
@@ -112,17 +112,17 @@ app.post("/urls", (req, res) => {
 //single url page
 app.get("/urls/:id", (req, res) => {
   let tinyURL = req.params.id;
-  if (!cookieIsCurrentUser(req.cookies["user_id"], users)) {
+  if (!cookieIsCurrentUser(req.session.user_id, users)) {
     res.send("If you own this tiny URL, please login in order to view/ edit it.");
   }
-  if (req.cookies["user_id"] !== urlDatabase[tinyURL].userID) {
+  if (req.session.user_id !== urlDatabase[tinyURL].userID) {
     res.send("This link is not associatd with your account.");
   }
   if (urlDatabase[req.params.id]) {
     let templateVars = {
       tinyURL: req.params.id,
       longURL: urlDatabase[req.params.id].longURL,
-      urlUserID: urlDatabase[req.cookies["user_id"]].userID,
+      urlUserID: urlDatabase[req.session.user_id].userID,
       user: users[req.session.user_id],
     };
     res.render("urls_show", templateVars);
@@ -148,7 +148,7 @@ app.get("/u/:id", (req, res) => {
 
 //delete tinyurl
 app.post("/urls/:id/delete", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const userUrls = urlsforUser(userID, urlDatabase);
   if (Object.keys(userUrls).includes(req.params.id)) {
     const tinyURL = req.params.id;
@@ -164,7 +164,7 @@ app.post("/urls/:id", (req, res) => {
   let tinyURL = req.params.id;
   let newLongURL = req.body.newURL;
   console.log(req.body);
-  if (req.cookies["user_id"] === urlDatabase[tinyURL].userID) {
+  if (req.session.user_id === urlDatabase[tinyURL].userID) {
     urlDatabase[tinyURL].longURL = newLongURL;
     res.redirect('/urls');
   } else {
@@ -175,7 +175,7 @@ app.post("/urls/:id", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
     urls: urlDatabase,
   };
   res.render("urls_index", templateVars);
@@ -183,11 +183,11 @@ app.get("/urls", (req, res) => {
 
 //register new user
 app.get("/register", (req, res) => {
-  if (cookieIsCurrentUser(req.cookies["user_id"], users)) {
+  if (cookieIsCurrentUser(req.session.user_id, users)) {
     res.redirect("/urls");
   } else {
     let templateVars = {
-      user: users[req.cookies["user_id"]],
+      user: users[req.session.user_id],
     };
     res.render("urls_register", templateVars);
   }
@@ -207,17 +207,17 @@ app.post("/register", (req, res) => {
     email: email,
     password: bcrypt.hashSync(password, 10)
   };
-  res.cookie("user_id", randomID);
+  req.session.user_id = randomID;
   res.redirect("/urls");
 });
 
 //login
 app.get("/login", (req, res) => {
-  if (cookieIsCurrentUser(req.cookies["user_id"], users)) {
+  if (cookieIsCurrentUser(req.session.user_id, users)) {
     res.redirect("/urls");
   }
   const templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
     urls: urlDatabase,
   };
   res.render("urls_login", templateVars);
@@ -234,7 +234,7 @@ app.post("/login", (req, res) => {
     if (!bcrypt.compareSync(password, users[userID].password)) {
       res.status(403).send("The password you have entered doesn't match one associated with the provided email address");
     } else {
-      res.cookie("user_id", userID);
+      req.session.user_id = userID;
       res.redirect("/urls");
     }
   }
@@ -242,7 +242,7 @@ app.post("/login", (req, res) => {
 
 //logout
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  res.session = null;
   res.redirect("/login");
 });
 
