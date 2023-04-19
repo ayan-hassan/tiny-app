@@ -52,7 +52,6 @@ app.post("/urls", (req, res) => {
       longURL: req.body.longURL,
       userID: req.session.user_id,
     };
-    console.log(urlDatabase);
     res.redirect(`/urls/${tinyURL}`);
   } else {
     res.status(401).send("Please log in with a valid account in order to create tiny URLs.");
