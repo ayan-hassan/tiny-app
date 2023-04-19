@@ -5,19 +5,19 @@ const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
 
-app.set("view engine", "ejs");
+const urlDatabase = {};
+
+const users = {};
 
 app.use(express.urlencoded({ extended: true}));
+
 app.use(cookieSession({
   name: 'session',
   keys: ['key1'],
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 
-const urlDatabase = {};
-
-const users = {};
-
+app.set("view engine", "ejs");
 //---------------- HELPER FUNCTIONS -------------------//
 
 const generateRandomString = () => {
@@ -51,7 +51,7 @@ const cookieIsCurrentUser = (cookie, userDatabase) => {
 };
 
 //checks if URLs' useriD matches the currently logged in user
-const urlsforUser = (id) => {
+const urlsforUser = (id, urlDatabase) => {
   let result = {};
   for (const user in urlDatabase) {
     if (urlDatabase[user].userID === id) {
@@ -85,19 +85,6 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-//------------------------ ADD NEW TINYURL -----------------------------//
-
-//renders page
-app.get("/urls/new", (req, res) => {
-  if (!cookieIsCurrentUser(req.session.user_id, users)) {
-    res.redirect("/login");
-  }
-  const templateVars = {
-    user: users[req.session.user_id]
-  };
-  res.render("urls_new", templateVars);
-});
-
 //creates new tinyurl
 app.post("/urls", (req, res) => {
   if (req.session.user_id) {
@@ -112,28 +99,31 @@ app.post("/urls", (req, res) => {
   }
 });
 
-//------------------------ SINGLE TINYURL PAGE -----------------------------//
+//------------------------ ADD NEW TINYURL -----------------------------//
 
-app.get("/urls/:id", (req, res) => {
-  let tinyURL = req.params.id;
+//renders page
+app.get("/urls/new", (req, res) => {
   if (!cookieIsCurrentUser(req.session.user_id, users)) {
-    res.send("If you own this tiny URL, please login in order to view/ edit it.");
+    res.redirect("/login");
   }
-  if (req.session.user_id !== urlDatabase[tinyURL].userID) {
-    res.send("This link is not associatd with your account.");
-  }
-  if (urlDatabase[req.params.id]) {
-    let templateVars = {
-      tinyURL: req.params.id,
-      longURL: urlDatabase[req.params.id].longURL,
-      urlUserID: urlDatabase[req.session.user_id].userID,
-      user: users[req.session.user_id],
-    };
-    res.render("urls_show", templateVars);
-  } else {
-    res.status(404).send("The tiny URL you entered does not correspond with a registered long URL.");
-  }
+  const templateVars = {
+    user: users[req.session.user_id]
+  };
+  res.render("urls_new", templateVars);
+});
 
+//------------------------ DELETE SAVED URLS -----------------------------//
+
+app.post("/urls/:id/delete", (req, res) => {
+  const userID = req.session.user_id;
+  const userUrls = urlsforUser(userID, urlDatabase);
+  if (Object.keys(userUrls).includes(req.params.id)) {
+    const tinyURL = req.params.id;
+    delete urlDatabase[tinyURL];
+    res.redirect('/urls');
+  } else {
+    res.status(401).send("You are not authorized to delete this tiny URL.");
+  }
 });
 
 //------------------------ REDIRECTS TO LONG URL -----------------------------//
@@ -151,18 +141,28 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-//------------------------ DELETE SAVED URLS -----------------------------//
+//------------------------ SINGLE TINYURL PAGE -----------------------------//
 
-app.post("/urls/:id/delete", (req, res) => {
-  const userID = req.session.user_id;
-  const userUrls = urlsforUser(userID, urlDatabase);
-  if (Object.keys(userUrls).includes(req.params.id)) {
-    const tinyURL = req.params.id;
-    delete urlDatabase[tinyURL];
-    res.redirect('/urls');
-  } else {
-    res.status(401).send("You are not authorized to delete this tiny URL.");
+app.get("/urls/:id", (req, res) => {
+  let tinyURL = req.params.id;
+  if (!cookieIsCurrentUser(req.session.user_id, users)) {
+    res.send("If you own this tiny URL, please login in order to view/ edit it.");
   }
+  if (req.session.user_id !== urlDatabase[tinyURL].userID) {
+    res.send("This link is not associatd with your account.");
+  }
+  if (urlDatabase[req.params.id]) {
+    let templateVars = {
+      tinyURL: req.params.id,
+      longURL: urlDatabase[req.params.id].longURL,
+      urlUserID: urlDatabase[req.params.id].userID,
+      user: users[req.session.user_id],
+    };
+    res.render("urls_show", templateVars);
+  } else {
+    res.status(404).send("The tiny URL you entered does not correspond with a registered long URL.");
+  }
+
 });
 
 //------------------------ EDIT SAVED URLS -----------------------------//
@@ -170,7 +170,6 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   let tinyURL = req.params.id;
   let newLongURL = req.body.newURL;
-  console.log(req.body);
   if (req.session.user_id === urlDatabase[tinyURL].userID) {
     urlDatabase[tinyURL].longURL = newLongURL;
     res.redirect('/urls');
