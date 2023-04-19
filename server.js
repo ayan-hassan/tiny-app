@@ -61,7 +61,7 @@ const urlsforUser = (id) => {
   return result;
 };
 
-//------------------------ROUTES-----------------------------//
+//********************************* ROUTES **********************************//
 
 app.get("/", (req, res) => {
   if (cookieIsCurrentUser(req.session.user_id, users)) {
@@ -75,16 +75,19 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-//displays all saved urls
+//------------------------ DISPLAY SAVED URLS -----------------------------//
+
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlsforUser(req.session.user_id, urlDatabase),
     user: users[req.session.user_id]
   };
   res.render("urls_index", templateVars);
-  console.log(urlDatabase);
 });
 
+//------------------------ ADD NEW TINYURL -----------------------------//
+
+//renders page
 app.get("/urls/new", (req, res) => {
   if (!cookieIsCurrentUser(req.session.user_id, users)) {
     res.redirect("/login");
@@ -97,7 +100,7 @@ app.get("/urls/new", (req, res) => {
 
 //creates new tinyurl
 app.post("/urls", (req, res) => {
-  if (cookieIsCurrentUser(req.session.user_id, users)) {
+  if (req.session.user_id) {
     const tinyURL = generateRandomString();
     urlDatabase[tinyURL] = {
       longURL: req.body.longURL,
@@ -109,7 +112,8 @@ app.post("/urls", (req, res) => {
   }
 });
 
-//single url page
+//------------------------ SINGLE TINYURL PAGE -----------------------------//
+
 app.get("/urls/:id", (req, res) => {
   let tinyURL = req.params.id;
   if (!cookieIsCurrentUser(req.session.user_id, users)) {
@@ -132,7 +136,8 @@ app.get("/urls/:id", (req, res) => {
 
 });
 
-//redirect to longurl
+//------------------------ REDIRECTS TO LONG URL -----------------------------//
+
 app.get("/u/:id", (req, res) => {
   if (urlDatabase[req.params.id]) {
     const longURL = urlDatabase[req.params.id].longURL;
@@ -146,7 +151,8 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-//delete tinyurl
+//------------------------ DELETE SAVED URLS -----------------------------//
+
 app.post("/urls/:id/delete", (req, res) => {
   const userID = req.session.user_id;
   const userUrls = urlsforUser(userID, urlDatabase);
@@ -159,7 +165,8 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 });
 
-//edit longurl
+//------------------------ EDIT SAVED URLS -----------------------------//
+
 app.post("/urls/:id", (req, res) => {
   let tinyURL = req.params.id;
   let newLongURL = req.body.newURL;
@@ -172,18 +179,11 @@ app.post("/urls/:id", (req, res) => {
   }
 });
 
+//------------------------ REGISTER NEW USER -----------------------------//
 
-app.get("/urls", (req, res) => {
-  const templateVars = {
-    user: users[req.session.user_id],
-    urls: urlDatabase,
-  };
-  res.render("urls_index", templateVars);
-});
-
-//register new user
+//renders register page
 app.get("/register", (req, res) => {
-  if (cookieIsCurrentUser(req.session.user_id, users)) {
+  if (cookieIsCurrentUser(req.session.user_id) === true) {
     res.redirect("/urls");
   } else {
     let templateVars = {
@@ -193,39 +193,42 @@ app.get("/register", (req, res) => {
   }
 });
 
+//adds new user to database
 app.post("/register", (req, res) => {
   const randomID = generateRandomString();
   const { email, password } = req.body;
-  if (email === "" || password === "") {
+  if (!email || !password) {
     return res.status(400).send("Please register with a valid email and/or password.");
-  }
-  if (emailHasUser(email, users)) {
+  } else if (emailHasUser(email, users)) {
     return res.status(400).send("This email address is already registered with an account.");
+  } else {
+    users[randomID] = {
+      id: randomID,
+      email: email,
+      password: bcrypt.hashSync(password, 10)
+    };
+    req.session.user_id = randomID;
+    res.redirect("/urls");
   }
-  users[randomID] = {
-    id: randomID,
-    email: email,
-    password: bcrypt.hashSync(password, 10)
-  };
-  req.session.user_id = randomID;
-  res.redirect("/urls");
 });
 
-//login
+//------------------------ LOGIN -----------------------------//
+
+//renders login page
 app.get("/login", (req, res) => {
   if (cookieIsCurrentUser(req.session.user_id, users)) {
     res.redirect("/urls");
+  } else {
+    const templateVars = {
+      user: users[req.session.user_id],
+    };
+    res.render("urls_login", templateVars);
   }
-  const templateVars = {
-    user: users[req.session.user_id],
-    urls: urlDatabase,
-  };
-  res.render("urls_login", templateVars);
 });
 
+//logs in user
 app.post("/login", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
+  const { email, password } = req.body;
 
   if (!emailHasUser(email, users)) {
     res.status(403).send("This email address is not associated with an account");
@@ -240,9 +243,10 @@ app.post("/login", (req, res) => {
   }
 });
 
-//logout
+//------------------------ LOGOUT -----------------------------//
+
 app.post("/logout", (req, res) => {
-  res.session = null;
+  req.session = null;
   res.redirect("/login");
 });
 
