@@ -64,15 +64,15 @@ const urlsforUser = (id) => {
 //------------------------ROUTES-----------------------------//
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (cookieIsCurrentUser(req.session.user_id, users)) {
+    res.redirect("/urls");
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 //displays all saved urls
