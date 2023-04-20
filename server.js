@@ -108,11 +108,9 @@ app.get("/urls/:id", (req, res) => {
   let tinyURL = req.params.id;
   if (!cookieIsCurrentUser(req.session.user_id, users)) {
     res.send("If you own this tiny URL, please login in order to view/ edit it.");
-  }
-  if (req.session.user_id !== urlDatabase[tinyURL].userID) {
-    res.send("This link is not associatd with your account.");
-  }
-  if (urlDatabase[req.params.id]) {
+  } else if (req.session.user_id !== urlDatabase[tinyURL].userID) {
+    res.send("This link is not associated with your account.");
+  } else if (urlDatabase[req.params.id]) {
     let templateVars = {
       tinyURL: req.params.id,
       longURL: urlDatabase[req.params.id].longURL,
@@ -123,7 +121,6 @@ app.get("/urls/:id", (req, res) => {
   } else {
     res.status(404).send("The tiny URL you entered does not correspond with a registered long URL.");
   }
-
 });
 
 //------------------------ EDIT SAVED URLS -----------------------------//
