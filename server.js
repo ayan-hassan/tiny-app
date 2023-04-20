@@ -7,9 +7,7 @@ const PORT = 8080;
 
 const { generateRandomString, emailHasUser, getUserID, cookieIsCurrentUser, urlsforUser } = require("./helpers");
 
-const urlDatabase = {};
-
-const users = {};
+const { urlDatabase, users } = require("./databases");
 
 app.use(express.urlencoded({ extended: true}));
 
