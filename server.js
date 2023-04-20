@@ -35,12 +35,28 @@ app.get("/urls.json", (req, res) => {
 
 //------------------------ DISPLAY SAVED URLS -----------------------------//
 
+//renders saved tinyURLs
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlsforUser(req.session.user_id, urlDatabase),
     user: users[req.session.user_id]
   };
   res.render("urls_index", templateVars);
+});
+
+
+//------------------------ ADD NEW TINYURL -----------------------------//
+
+//renders page
+app.get("/urls/new", (req, res) => {
+  if (!cookieIsCurrentUser(req.session.user_id, users)) {
+    res.redirect("/login");
+  } else {
+    const templateVars = {
+      user: users[req.session.user_id]
+    };
+    res.render("urls_new", templateVars);
+  }
 });
 
 //creates new tinyurl
@@ -54,20 +70,6 @@ app.post("/urls", (req, res) => {
     res.redirect(`/urls/${tinyURL}`);
   } else {
     res.status(401).send("Please log in with a valid account in order to create tiny URLs.");
-  }
-});
-
-//------------------------ ADD NEW TINYURL -----------------------------//
-
-//renders page
-app.get("/urls/new", (req, res) => {
-  if (!cookieIsCurrentUser(req.session.user_id, users)) {
-    res.redirect("/login");
-  } else {
-    const templateVars = {
-      user: users[req.session.user_id]
-    };
-    res.render("urls_new", templateVars);
   }
 });
 
