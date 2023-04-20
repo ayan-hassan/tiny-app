@@ -14,7 +14,7 @@ const users = {};
 app.use(express.urlencoded({ extended: true}));
 
 app.use(cookieSession({
-  name: 'session',
+  name: 'hello-you',
   keys: ['key1'],
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
