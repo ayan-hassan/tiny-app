@@ -2,6 +2,7 @@ const express = require("express");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const app = express();
+
 const PORT = 8080;
 
 const { generateRandomString, emailHasUser, getUserID, cookieIsCurrentUser, urlsforUser } = require("./helpers");
@@ -64,11 +65,12 @@ app.post("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   if (!cookieIsCurrentUser(req.session.user_id, users)) {
     res.redirect("/login");
+  } else {
+    const templateVars = {
+      user: users[req.session.user_id]
+    };
+    res.render("urls_new", templateVars);
   }
-  const templateVars = {
-    user: users[req.session.user_id]
-  };
-  res.render("urls_new", templateVars);
 });
 
 //------------------------ DELETE SAVED URLS -----------------------------//
